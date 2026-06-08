@@ -1,6 +1,25 @@
 @import 'tailwindcss';
 
 @layer base {
+  :root {
+    --va-background: #e9eef4;
+    --va-surface: #ffffff;
+    --va-surface-soft: #f0fdfa;
+    --va-border: #c9d3de;
+    --va-border-strong: #9fb0c0;
+    --va-text: #102033;
+    --va-text-muted: #64748b;
+    --va-accent: #0f766e;
+    --va-accent-dark: #115e59;
+    --va-accent-soft: #ccfbf1;
+    --va-blue: #2563eb;
+    --va-warm: #d97706;
+    --va-purple: #7c3aed;
+    --va-warning-soft: #fffbeb;
+    --va-shadow: none;
+    --va-radius: 4px;
+  }
+
   html,
   body,
   #app {
@@ -8,6 +27,300 @@
   }
 
   body {
-    @apply m-0 bg-slate-50 text-slate-900 antialiased;
+    @apply m-0 antialiased;
+    background: var(--va-background);
+    color: var(--va-text);
+    font-family: "Segoe UI", Arial, sans-serif;
+  }
+
+  button,
+  input,
+  select {
+    font: inherit;
+  }
+}
+
+@layer components {
+  .va-page {
+    @apply mx-auto w-full px-1.5 py-1.5 md:px-2;
+    max-width: 1680px;
+  }
+
+  .va-card {
+    @apply rounded border bg-white;
+    border-color: var(--va-border);
+    box-shadow: var(--va-shadow);
+  }
+
+  .va-card-pad {
+    @apply p-4;
+  }
+
+  .va-section {
+    @apply scroll-mt-28;
+  }
+
+  .va-section-gap {
+    @apply mt-8;
+  }
+
+  .va-label {
+    @apply text-xs font-semibold uppercase tracking-wide;
+    color: var(--va-accent);
+  }
+
+  .va-muted {
+    color: var(--va-text-muted);
+  }
+
+  .va-control {
+    @apply h-8 rounded border bg-white px-2 text-xs outline-none transition;
+    border-color: var(--va-border-strong);
+    color: var(--va-text);
+  }
+
+  .va-control:focus {
+    border-color: var(--va-accent);
+    box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+  }
+
+  .va-button-primary {
+    @apply h-8 rounded px-2.5 text-xs font-semibold text-white transition;
+    background: var(--va-accent);
+  }
+
+  .va-button-primary:hover {
+    background: var(--va-accent-dark);
+  }
+
+  .va-button-secondary {
+    @apply h-8 rounded border bg-white px-2.5 text-xs font-medium transition;
+    border-color: var(--va-border-strong);
+    color: var(--va-text);
+  }
+
+  .va-button-secondary:hover {
+    background: #f8fafc;
+    border-color: var(--va-accent);
+  }
+
+  .dashboard-report {
+    @apply relative grid gap-1.5;
+  }
+
+  .dashboard-header {
+    @apply grid gap-1.5 rounded border bg-white px-3 py-1.5 lg:grid-cols-[minmax(250px,1fr)_auto_auto] lg:items-center;
+    border-color: var(--va-border);
+    border-left: 4px solid var(--va-accent);
+  }
+
+  .dashboard-header h1 {
+    @apply mt-0.5 text-lg font-semibold leading-tight text-slate-950;
+  }
+
+  .dashboard-header p:last-child {
+    @apply mt-0.5 text-xs text-slate-500;
+  }
+
+  .dashboard-header-metrics {
+    @apply flex flex-wrap items-center gap-1.5;
+  }
+
+  .dashboard-header-metrics span {
+    @apply rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] text-slate-600;
+  }
+
+  .dashboard-header-actions {
+    @apply flex items-center justify-end gap-2;
+  }
+
+  .dashboard-canvas {
+    @apply grid min-w-0 gap-1.5;
+  }
+
+  .dashboard-filter-strip {
+    @apply p-1.5;
+  }
+
+  .dashboard-filter-grid {
+    @apply grid items-end gap-1.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[1fr_1.25fr_1fr_0.7fr_0.7fr_auto];
+  }
+
+  .dashboard-board {
+    @apply grid min-w-0 gap-1.5;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    align-items: stretch;
+  }
+
+  .dashboard-kpi-row {
+    grid-column: span 12;
+  }
+
+  .dashboard-card-heading {
+    @apply flex items-start justify-between gap-2;
+  }
+
+  .dashboard-card-heading h2 {
+    @apply truncate text-sm font-semibold text-slate-950;
+  }
+
+  .dashboard-card-heading > span {
+    @apply rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-600;
+  }
+
+  .dashboard-card-heading button {
+    @apply text-[11px] font-semibold text-teal-700;
+  }
+
+  .dashboard-eyebrow {
+    @apply mb-1 text-[10px] font-semibold uppercase text-slate-500;
+  }
+
+  .dashboard-network-panel,
+  .dashboard-genre-panel,
+  .dashboard-relationship-panel,
+  .dashboard-entity-panel,
+  .dashboard-timeline-panel,
+  .dashboard-rising-panel,
+  .dashboard-comparison-panel,
+  .dashboard-centrality-panel,
+  .dashboard-oceanus-panel,
+  .dashboard-artists-panel,
+  .dashboard-degree-panel,
+  .dashboard-evidence-panel {
+    @apply min-w-0;
+    grid-column: span 12;
+  }
+
+  .dashboard-chart-card,
+  .dashboard-mini-chart {
+    @apply h-full p-2.5;
+  }
+
+  .dashboard-network-panel,
+  .dashboard-timeline-panel {
+    @apply h-full;
+  }
+
+  .dashboard-panel-title h2 {
+    @apply text-sm font-semibold text-slate-950;
+  }
+
+  .dashboard-panel-title p {
+    @apply mt-0.5 text-[11px] text-slate-500;
+  }
+
+  .dashboard-empty {
+    @apply mt-3 rounded bg-slate-50 p-3 text-xs text-slate-500;
+  }
+
+  .donut-layout {
+    @apply grid min-h-[245px] flex-1 grid-cols-[minmax(145px,1.15fr)_minmax(0,0.85fr)] items-center gap-2;
+  }
+
+  .donut-legend {
+    @apply grid gap-1;
+  }
+
+  .donut-legend-row {
+    @apply grid grid-cols-[auto_minmax(0,1fr)_2rem] items-center gap-1.5 rounded-sm px-1 py-0.5 text-left text-[10px] text-slate-600;
+  }
+
+  .donut-legend-row:hover,
+  .donut-legend-row.is-selected {
+    @apply bg-teal-50;
+  }
+
+  .donut-legend-row strong {
+    @apply text-right font-semibold text-slate-700;
+  }
+
+  .evidence-table {
+    @apply mt-2 w-full border-collapse text-[11px];
+  }
+
+  .evidence-table th {
+    @apply border-b border-slate-200 pb-1 text-left font-semibold text-slate-500;
+  }
+
+  .evidence-table td {
+    @apply border-b border-slate-100 py-2 text-slate-700;
+  }
+
+  .evidence-table td:nth-child(2),
+  .evidence-table td:nth-child(3),
+  .evidence-table th:nth-child(2),
+  .evidence-table th:nth-child(3) {
+    @apply text-right tabular-nums;
+  }
+
+  .dashboard-visual-card {
+    height: auto;
+  }
+
+  .insight-overlay {
+    @apply fixed right-4 top-20 z-50 w-[min(360px,calc(100vw-2rem))] rounded-md border border-slate-200 bg-white p-4 shadow-xl;
+  }
+
+  @media (min-width: 1200px) {
+    .dashboard-network-panel {
+      grid-column: 1 / span 6;
+      grid-row: 2 / span 2;
+    }
+
+    .dashboard-genre-panel {
+      grid-column: 7 / span 3;
+      grid-row: 2;
+    }
+
+    .dashboard-entity-panel {
+      grid-column: 10 / span 3;
+      grid-row: 2;
+    }
+
+    .dashboard-timeline-panel {
+      grid-column: 1 / span 6;
+      grid-row: 4;
+    }
+
+    .dashboard-rising-panel {
+      grid-column: 7 / span 3;
+      grid-row: 3;
+    }
+
+    .dashboard-relationship-panel {
+      grid-column: 10 / span 3;
+      grid-row: 3;
+    }
+
+    .dashboard-comparison-panel {
+      grid-column: 7 / span 6;
+      grid-row: 4;
+    }
+
+    .dashboard-degree-panel {
+      grid-column: 1 / span 4;
+      grid-row: 5;
+    }
+
+    .dashboard-evidence-panel {
+      grid-column: 5 / span 4;
+      grid-row: 5;
+    }
+
+    .dashboard-centrality-panel {
+      grid-column: 9 / span 4;
+      grid-row: 5;
+    }
+
+    .dashboard-artists-panel {
+      grid-column: 1 / span 6;
+      grid-row: 6;
+    }
+
+    .dashboard-oceanus-panel {
+      grid-column: 7 / span 6;
+      grid-row: 6;
+    }
   }
 }
