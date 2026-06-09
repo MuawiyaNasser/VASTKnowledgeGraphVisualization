@@ -67,7 +67,7 @@ const yTicks = computed(() => yScale.value.ticks(4))
           :cx="xScale(row.collaborations)"
           :cy="yScale(row.releases)"
           :r="radiusScale(row.degree)"
-          :fill="String(row.id) === String(selectedId) ? '#0f766e' : '#7c3aed'"
+          :fill="String(row.id) === String(selectedId) ? '#0f766e' : '#0284c7'"
           :opacity="String(row.id) === String(selectedId) ? 1 : 0.68"
           stroke="white"
           stroke-width="1.5"

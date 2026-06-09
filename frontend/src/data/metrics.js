@@ -114,6 +114,7 @@ export function computeOceanusGenreLinks(graph, degreeById = computeDegrees(grap
           songs: 0,
           influence: 0,
           collaboration: 0,
+          other: 0,
           topEntity: node,
           topDegree: degreeById.get(node.id)?.degree ?? 0,
         })
@@ -123,8 +124,10 @@ export function computeOceanusGenreLinks(graph, degreeById = computeDegrees(grap
       row.value += 1
       if (isArtist(node)) row.artists += 1
       if (isSong(node)) row.songs += 1
-      if (isInfluenceEdge(link)) row.influence += 1
-      if (isCollaborationEdge(link)) row.collaboration += 1
+      const relationshipClass = classifyRelationship(link)
+      if (relationshipClass === 'influence') row.influence += 1
+      else if (relationshipClass === 'creative') row.collaboration += 1
+      else row.other += 1
 
       const degree = degreeById.get(node.id)?.degree ?? 0
       if (degree > row.topDegree) {
@@ -217,6 +220,14 @@ export function isCollaborationEdge(link) {
 
 export function isInfluenceEdge(link) {
   return INFLUENCE_TYPES.some((token) => link.edgeTypeKey.includes(token))
+}
+
+// Stacked charts need one class per link. Influence is checked first because
+// cover, sample, reference, and style links are analytical influence evidence.
+export function classifyRelationship(link) {
+  if (isInfluenceEdge(link)) return 'influence'
+  if (isCollaborationEdge(link)) return 'creative'
+  return 'other'
 }
 
 export function getEgoNetwork(graph, centerId, hops = 1) {

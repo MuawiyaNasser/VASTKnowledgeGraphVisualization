@@ -133,7 +133,7 @@ The visible chart set includes:
 - a degree-distribution histogram;
 - a lollipop chart for entity centrality;
 - a bubble scatterplot for artist creative and release activity;
-- stacked bars for Oceanus genre-link composition;
+- horizontal bars for Oceanus genre links, with stacked segments only when more than one relationship class is present;
 - one compact evidence table for exact values.
 
 ## Interaction Guide
@@ -158,10 +158,14 @@ The design follows the course principles for visual variables:
 - node color encodes entity type;
 - node size encodes graph degree;
 - teal indicates the active analytical focus;
-- gray and slate colors provide context without competing with selected data;
+- blue supports factual comparisons and artist context;
+- orange marks provisional rising-star hypotheses rather than confirmed truth;
+- slate represents neutral graph structure;
+- rose identifies influence evidence in the Oceanus genre-link view;
+- gray provides context without competing with selected data;
 - Unknown genre values are not deleted, but genre charts exclude them by default to reveal interpretable patterns.
 
-The color palette is intentionally limited and color-blind friendlier than random categorical colors. The same entity colors are used in the radial network and encoding legend.
+The color palette is intentionally limited and color-blind friendlier than random categorical colors. The same entity colors are used in the radial network and donut. Each link in the Oceanus genre-link aggregation is assigned to exactly one category: Influence, Creative, or Other. When a category has a zero total it is hidden from the legend; the current full view contains only influence links and states this directly.
 
 ## Original D3.js Visualization
 

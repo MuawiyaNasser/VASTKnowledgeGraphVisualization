@@ -64,7 +64,7 @@ const yTicks = computed(() => yScale.value.ticks(3))
           :y="yScale(row.value)"
           :width="xScale.bandwidth()"
           :height="height - margin.bottom - yScale(row.value)"
-          fill="#7c3aed"
+          fill="#475569"
           opacity="0.85"
           rx="1.5"
         >

@@ -31,9 +31,10 @@
       <article class="va-card va-card-pad">
         <h2 class="text-base font-semibold text-slate-950">Visual Encodings</h2>
         <p class="mt-3 text-sm leading-6 text-slate-600">
-          Color hue represents entity type. Position and length encode quantitative values. The radial network uses
-          rings for direct and indirect relationships, node size for degree, and line style for relationship category.
-          Teal marks the active analytical focus.
+          Position and length encode quantitative values. The radial network uses rings for graph distance, node size
+          for degree, and line style for relationship meaning. Entity colors stay consistent across the network and
+          donut. Teal marks selection, blue supports factual comparison, orange marks provisional hypotheses, slate
+          represents neutral structure, and rose identifies influence evidence.
         </p>
       </article>
 

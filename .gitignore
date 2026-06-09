@@ -1,0 +1,6 @@
+# Local report build and inspection tools.
+# The editable source, final PDF, and high-resolution figures remain tracked.
+report/build/
+report/rendered/
+report/node_modules
+report/tools/python/

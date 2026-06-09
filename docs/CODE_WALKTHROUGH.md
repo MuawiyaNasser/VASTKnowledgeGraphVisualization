@@ -335,7 +335,7 @@ many visual variables at once.
 | How is connectivity distributed? | Quantitative degree values | Bin position and column height | Histogram |
 | Which entities are most central? | Ranked nominal categories | Horizontal position and stem length | Lollipop chart |
 | Which artists combine creative and release activity? | Two quantitative variables plus degree | X/Y position and bubble area | Bubble scatterplot |
-| How are Oceanus genre links composed? | Genre totals split by relationship role | Stacked segment length and hue | Stacked horizontal bars |
+| How are Oceanus genre links composed? | Genre totals classified exclusively as Influence, Creative, or Other | Bar length and relationship hue | Horizontal bars; stacked only when multiple classes are nonzero |
 | What are the exact relationship values? | Exact supporting values | Text in aligned columns | One compact evidence table |
 
 Simple explanation:
