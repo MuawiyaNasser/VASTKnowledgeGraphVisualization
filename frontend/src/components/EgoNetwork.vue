@@ -2,6 +2,7 @@
 import * as d3 from 'd3'
 import { computed, ref } from 'vue'
 import { getEgoNetwork } from '../data/metrics'
+import LearningHint from './LearningHint.vue'
 
 const props = defineProps({
   graph: {
@@ -20,9 +21,13 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  learningMode: {
+    type: Boolean,
+    default: false,
+  },
 })
 
-const emit = defineEmits(['select', 'select-edge', 'update-network-settings'])
+const emit = defineEmits(['select', 'update-network-settings'])
 
 const hoveredNodeId = ref(null)
 const hoveredEdge = ref(null)
@@ -50,46 +55,13 @@ const legendItems = computed(() =>
 // This keeps the graph readable: we never draw the full knowledge graph here.
 const visibleNetwork = computed(() => {
   if (!props.centerNode) {
-    return { nodes: [], links: [] }
+    return { nodes: [], links: [], genreSeedIds: new Set(), genreContextIds: new Set(), hasGenreEvidence: false }
   }
 
   const ego = getEgoNetwork(props.graph, props.centerNode.id, Number(props.networkSettings.depth))
-  const selected = new Set([props.centerNode.id])
-  let genreContextIds = null
+  const selectedIds = new Set([props.centerNode.id])
 
-  if (props.filters.genre) {
-    const genreSeedIds = new Set(
-      ego.nodes
-        .filter((node) => node.genre === props.filters.genre || node.label === props.filters.genre)
-        .map((node) => node.id),
-    )
-    genreContextIds = new Set(genreSeedIds)
-    for (const link of ego.links) {
-      if (genreSeedIds.has(link.source) || genreSeedIds.has(link.target)) {
-        genreContextIds.add(link.source)
-        genreContextIds.add(link.target)
-      }
-    }
-  }
-
-  const ranked = ego.nodes
-    .filter((node) => node.id !== props.centerNode.id)
-    .filter((node) => !props.filters.nodeType || node.nodeType === props.filters.nodeType)
-    .filter((node) => !genreContextIds || genreContextIds.has(node.id))
-    .filter((node) => inYearRange(node.year))
-    .map((node) => ({
-      node,
-      distance: isDirectNeighbor(ego.links, props.centerNode.id, node.id) ? 1 : 2,
-      degree: props.graph.degreeById?.get(node.id)?.degree ?? 0,
-    }))
-    // Prioritize closer and more connected nodes when the neighborhood is too large.
-    .sort((a, b) => a.distance - b.distance || b.degree - a.degree || a.node.label.localeCompare(b.node.label))
-    .slice(0, props.networkSettings.nodeLimit)
-
-  for (const row of ranked) selected.add(row.node.id)
-
-  const links = ego.links
-    .filter((link) => selected.has(link.source) && selected.has(link.target))
+  const filteredLinks = ego.links
     .filter((link) => !props.filters.edgeType || link.edgeType === props.filters.edgeType)
     .filter(
       (link) =>
@@ -98,13 +70,87 @@ const visibleNetwork = computed(() => {
     )
     .filter((link) => inYearRange(link.year ?? link.sourceNode?.year ?? link.targetNode?.year))
 
+  const genreSeedIds = new Set()
+  const genreContextIds = new Set()
+  const bridgeIds = new Set([props.centerNode.id])
+
+  if (props.filters.genre) {
+    for (const node of ego.nodes) {
+      if (nodeMatchesGenre(node)) genreSeedIds.add(node.id)
+    }
+
+    for (const link of filteredLinks) {
+      const sourceIsSeed = genreSeedIds.has(link.source)
+      const targetIsSeed = genreSeedIds.has(link.target)
+      if (sourceIsSeed || targetIsSeed) {
+        genreContextIds.add(link.source)
+        genreContextIds.add(link.target)
+      }
+    }
+
+    // Keep bridge nodes that explain a path from the center to genre context.
+    for (const link of filteredLinks) {
+      const touchesCenter = link.source === props.centerNode.id || link.target === props.centerNode.id
+      const touchesContext = genreContextIds.has(link.source) || genreContextIds.has(link.target)
+      if (touchesCenter || touchesContext) {
+        bridgeIds.add(link.source)
+        bridgeIds.add(link.target)
+      }
+    }
+  }
+
+  const ranked = ego.nodes
+    .filter((node) => node.id !== props.centerNode.id)
+    .filter((node) => inYearRange(node.year))
+    .filter((node) => !props.filters.genre || genreContextIds.has(node.id) || bridgeIds.has(node.id))
+    .map((node) => ({
+      node,
+      distance: isDirectNeighbor(ego.links, props.centerNode.id, node.id) ? 1 : 2,
+      degree: props.graph.degreeById?.get(node.id)?.degree ?? 0,
+      genreRole: genreSeedIds.has(node.id) ? 'seed' : genreContextIds.has(node.id) ? 'context' : 'bridge',
+    }))
+    // Prioritize closer and more connected nodes when the neighborhood is too large.
+    .sort(
+      (a, b) =>
+        a.distance - b.distance ||
+        genreRank(b.genreRole) - genreRank(a.genreRole) ||
+        b.degree - a.degree ||
+        a.node.label.localeCompare(b.node.label),
+    )
+    .slice(0, props.networkSettings.nodeLimit)
+
+  for (const row of ranked) selectedIds.add(row.node.id)
+
+  const links = filteredLinks.filter((link) => selectedIds.has(link.source) && selectedIds.has(link.target))
+
   return {
     nodes: [
-      { node: props.centerNode, distance: 0, degree: props.graph.degreeById?.get(props.centerNode.id)?.degree ?? 0 },
+      {
+        node: props.centerNode,
+        distance: 0,
+        degree: props.graph.degreeById?.get(props.centerNode.id)?.degree ?? 0,
+        genreRole: genreSeedIds.has(props.centerNode.id) ? 'seed' : genreContextIds.has(props.centerNode.id) ? 'context' : 'bridge',
+      },
       ...ranked,
     ],
     links,
+    genreSeedIds,
+    genreContextIds,
+    hasGenreEvidence: !props.filters.genre || genreContextIds.size > 0,
   }
+})
+
+const networkSubtitle = computed(() => {
+  if (props.filters.genre && props.networkSettings.relationshipFocus !== 'all') {
+    return `${props.filters.genre} context using ${props.networkSettings.relationshipFocus} relationships only.`
+  }
+  if (props.filters.genre) {
+    return `${props.filters.genre} context around ${props.centerNode?.label ?? 'the selected entity'}; bridge nodes are retained.`
+  }
+  if (props.filters.nodeType) {
+    return `${props.filters.nodeType} nodes are emphasized; other node types remain as bridge context.`
+  }
+  return 'Center is the selected entity. Inner ring is direct context; outer ring is indirect context.'
 })
 
 // Radial layout:
@@ -176,7 +222,8 @@ function nodeTypeKey(type) {
 }
 
 function nodeRadius(row) {
-  return row.distance === 0 ? 19 : Math.max(4.5, Math.min(10.5, 3.8 + Math.sqrt(row.degree) * 0.8))
+  const base = row.distance === 0 ? 19 : Math.max(4.5, Math.min(10.5, 3.8 + Math.sqrt(row.degree) * 0.8))
+  return isNodeTypeFocused(row) ? base : base * 0.72
 }
 
 // Hovering dims unrelated items instead of hiding them, so the analyst does not lose orientation.
@@ -198,8 +245,47 @@ function isRelatedToHover(row) {
 function shouldLabel(row) {
   if (row.distance === 0) return true
   if (hoveredNodeId.value === row.node.id) return true
+  if (props.filters.nodeType && row.node.nodeType !== props.filters.nodeType) return false
   if (positionedNodes.value.length <= 35 && row.distance === 1) return true
   return row.degree > 18
+}
+
+function nodeMatchesGenre(node) {
+  return Boolean(props.filters.genre) && (node.genre === props.filters.genre || node.label === props.filters.genre)
+}
+
+function genreRank(role) {
+  if (!props.filters.genre) return 0
+  if (role === 'seed') return 3
+  if (role === 'context') return 2
+  return 1
+}
+
+function isNodeTypeFocused(row) {
+  return !props.filters.nodeType || row.distance === 0 || row.node.nodeType === props.filters.nodeType
+}
+
+function nodeOpacity(row) {
+  let opacity = isRelatedToHover(row) ? 1 : 0.22
+  if (props.filters.genre && row.genreRole === 'bridge') opacity = Math.min(opacity, 0.42)
+  if (!isNodeTypeFocused(row)) opacity = Math.min(opacity, 0.32)
+  if (row.node.genre === 'Unknown') opacity = Math.min(opacity, 0.64)
+  return opacity
+}
+
+function nodeStroke(row) {
+  if (row.distance === 0 || hoveredNodeId.value === row.node.id) return '#0f766e'
+  if (props.filters.genre && row.genreRole === 'seed') return '#0f766e'
+  if (props.filters.genre && row.genreRole === 'context') return '#38bdf8'
+  if (row.node.genre === 'Unknown') return '#f59e0b'
+  return '#ffffff'
+}
+
+function nodeStrokeWidth(row) {
+  if (row.distance === 0 || hoveredNodeId.value === row.node.id) return 3
+  if (props.filters.genre && row.genreRole === 'seed') return 2.4
+  if (props.filters.genre && row.genreRole === 'context') return 1.8
+  return 1.2
 }
 
 function updateSetting(key, value) {
@@ -236,9 +322,7 @@ function edgeMatters(link) {
     <div class="flex flex-col gap-2 xl:flex-row xl:items-start xl:justify-between">
       <div>
         <h2 class="text-sm font-semibold text-slate-950">Radial Ego Network</h2>
-        <p class="mt-0.5 text-[11px] text-slate-500">
-          Center is the selected entity. Inner ring is direct context; outer ring is indirect context.
-        </p>
+        <p class="mt-0.5 text-[11px] text-slate-500">{{ networkSubtitle }}</p>
       </div>
       <p class="text-xs text-slate-500">{{ positionedNodes.length }} nodes | {{ visibleLinks.length }} links</p>
     </div>
@@ -303,10 +387,21 @@ function edgeMatters(link) {
       <span class="inline-flex items-center gap-2 rounded-full border border-slate-200 px-2 py-1">
         <span class="h-px w-6 border-t border-dotted border-slate-500" /> indirect
       </span>
+      <span v-if="filters.genre" class="inline-flex items-center gap-2 rounded-full border border-slate-200 px-2 py-1">
+        <span class="h-2.5 w-2.5 rounded-full border-2 border-teal-700 bg-white" /> genre match
+      </span>
     </div>
 
-    <div v-if="!positionedNodes.length" class="mt-4 rounded-lg bg-slate-50 p-5 text-sm text-slate-600">
-      No sufficient graph evidence for this filter. Try expanding the year range, choosing all relationships, or increasing the node limit.
+    <LearningHint
+      :learning-mode="learningMode"
+      purpose="Explores the local network around the selected entity."
+      use="Reveals direct and indirect collaborators, influences, works, labels, and nearby entities."
+      interaction="Change network depth, relationship focus, node limit, or click nodes to explore."
+      reading="Center is the selected entity; inner ring is direct context; outer ring is indirect context."
+    />
+
+    <div v-if="!positionedNodes.length || (filters.genre && !visibleNetwork.hasGenreEvidence)" class="mt-4 rounded-lg bg-slate-50 p-5 text-sm text-slate-600">
+      {{ filters.genre ? `No ${filters.genre} relationships found within ${centerNode?.label ?? 'the selected entity'}'s current ego-network depth.` : 'No sufficient graph evidence for this filter. Try expanding the year range, choosing all relationships, or increasing the node limit.' }}
     </div>
 
     <svg v-else class="mx-auto mt-1 block h-auto w-full max-w-[680px]" :viewBox="`0 0 ${width} ${height}`" role="img">
@@ -331,7 +426,7 @@ function edgeMatters(link) {
         class="cursor-pointer"
         @mouseenter="hoveredEdge = link"
         @mouseleave="hoveredEdge = null"
-        @click="emit('select-edge', link.edgeType)"
+        @click="hoveredEdge = link"
       >
         <title>
           {{ link.sourceNode.label }} -> {{ link.targetNode.label }}
@@ -354,14 +449,15 @@ function edgeMatters(link) {
         <circle
           :r="nodeRadius(row)"
           :fill="typeColor(nodeTypeKey(row.node.nodeType))"
-          :stroke="row.distance === 0 || hoveredNodeId === row.node.id ? '#0f766e' : row.node.genre === 'Unknown' ? '#f59e0b' : '#ffffff'"
-          :stroke-width="row.distance === 0 || hoveredNodeId === row.node.id ? 3 : 1.5"
-          :opacity="row.node.genre === 'Unknown' ? 0.64 : isRelatedToHover(row) ? 1 : 0.22"
+          :stroke="nodeStroke(row)"
+          :stroke-width="nodeStrokeWidth(row)"
+          :opacity="nodeOpacity(row)"
         >
           <title>
             {{ row.node.label }}
             Type: {{ row.node.nodeType }}
             Genre: {{ row.node.genre }}
+            Role: {{ filters.genre ? (row.genreRole === 'seed' ? `Direct ${filters.genre} match` : row.genreRole === 'context' ? 'Context neighbour' : 'Bridge context') : 'Ego network context' }}
             Year: {{ row.node.year ?? 'Unknown' }}
             Degree: {{ row.degree }}
           </title>

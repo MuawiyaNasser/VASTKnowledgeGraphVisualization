@@ -1,6 +1,7 @@
 <script setup>
 import * as d3 from 'd3'
 import { computed } from 'vue'
+import LearningHint from './LearningHint.vue'
 
 const props = defineProps({
   title: {
@@ -23,6 +24,7 @@ const props = defineProps({
     type: Number,
     default: 5,
   },
+  learningMode: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['select'])
@@ -62,6 +64,14 @@ function percent(value) {
       <h2>{{ title }}</h2>
       <p v-if="subtitle">{{ subtitle }}</p>
     </div>
+
+    <LearningHint
+      :learning-mode="learningMode"
+      purpose="Shows the share of visible entity types."
+      use="Understand whether the current view is dominated by people, songs, labels, albums, or groups."
+      interaction="Updates with filters."
+      reading="Larger slices mean that entity type is more common in the current view."
+    />
 
     <div v-if="chartData.length" class="donut-layout">
       <svg class="h-full w-full" :viewBox="`0 0 ${width} ${height}`" role="img">

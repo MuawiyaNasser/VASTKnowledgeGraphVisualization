@@ -69,7 +69,7 @@ export function normalizeLink(link, index, nodeById) {
 
 export function getEndpointId(endpoint) {
   if (endpoint && typeof endpoint === 'object') {
-    return endpoint.id
+    return endpoint.id ?? endpoint.entityId ?? endpoint.nodeId ?? endpoint.name ?? null
   }
 
   return endpoint

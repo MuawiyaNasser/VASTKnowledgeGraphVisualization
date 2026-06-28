@@ -1,6 +1,7 @@
 <script setup>
 import * as d3 from 'd3'
 import { computed } from 'vue'
+import LearningHint from './LearningHint.vue'
 
 const props = defineProps({
   title: {
@@ -23,6 +24,11 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  learningMode: { type: Boolean, default: false },
+  purpose: { type: String, default: 'Compares categorical values in the current view.' },
+  use: { type: String, default: 'Identify the most important categories.' },
+  interaction: { type: String, default: 'Click a bar to filter or focus the dashboard.' },
+  reading: { type: String, default: 'Longer bars mean larger values.' },
 })
 
 const emit = defineEmits(['select'])
@@ -41,11 +47,19 @@ function formatNumber(value) {
 </script>
 
 <template>
-  <article class="va-card p-3">
+  <article class="va-card relative p-3">
     <div class="mb-2.5">
       <h2 class="text-[15px] font-semibold text-slate-950">{{ title }}</h2>
       <p v-if="subtitle" class="mt-1 text-xs leading-5 text-slate-500">{{ subtitle }}</p>
     </div>
+
+    <LearningHint
+      :learning-mode="learningMode"
+      :purpose="purpose"
+      :use="use"
+      :interaction="interaction"
+      :reading="reading"
+    />
 
     <svg v-if="chartData.length" class="h-auto w-full" :viewBox="`0 0 ${width} ${height}`" role="img">
       <g

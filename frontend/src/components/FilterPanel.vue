@@ -47,7 +47,7 @@ function updateFilter(key, value) {
       "
     >
       <label class="flex flex-1 flex-col gap-1 text-xs font-medium text-slate-500">
-        Entity type
+        Entity focus
         <select
           class="va-control normal-case"
           :value="filters.nodeType"

@@ -1,4 +1,4 @@
-import { chromium } from 'file:///C:/Users/ASUS/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/.pnpm/playwright@1.60.0/node_modules/playwright/index.mjs'
+import { chromium } from 'file:///C:/Users/ASUS/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/.pnpm/playwright@1.61.0/node_modules/playwright/index.mjs'
 import sharp from 'file:///C:/Users/ASUS/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/.pnpm/sharp@0.34.5/node_modules/sharp/lib/index.js'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -23,6 +23,7 @@ await page.evaluate(() => document.fonts.ready)
 
 const captures = [
   ['dashboard_complete.png', '.dashboard-report'],
+  ['sailor_profile.png', '.dashboard-sailor-panel'],
   ['network.png', '.dashboard-network-panel'],
   ['genre_contribution.png', '.dashboard-genre-panel'],
   ['entity_composition.png', '.dashboard-entity-panel'],
@@ -53,8 +54,19 @@ const compactPage = await browser.newPage({
 await compactPage.goto('http://127.0.0.1:5173/', { waitUntil: 'networkidle' })
 await compactPage.locator('.dashboard-kpi-row').waitFor({ state: 'visible' })
 await compactPage.evaluate(() => document.fonts.ready)
-await compactPage.locator('.dashboard-kpi-row').screenshot({
+const overviewClip = await compactPage.evaluate(() => {
+  const boxes = ['.dashboard-kpi-row', '.dashboard-sailor-panel']
+    .map((selector) => document.querySelector(selector)?.getBoundingClientRect())
+    .filter(Boolean)
+  const left = Math.min(...boxes.map((box) => box.left))
+  const top = Math.min(...boxes.map((box) => box.top))
+  const right = Math.max(...boxes.map((box) => box.right))
+  const bottom = Math.max(...boxes.map((box) => box.bottom))
+  return { x: left, y: top, width: right - left, height: bottom - top }
+})
+await compactPage.screenshot({
   path: path.join(figuresDir, 'kpis.png'),
+  clip: overviewClip,
   animations: 'disabled',
 })
 await compactPage.close()

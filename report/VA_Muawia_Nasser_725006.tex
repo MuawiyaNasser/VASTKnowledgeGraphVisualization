@@ -124,9 +124,9 @@ The system helps a journalist investigate how Sailor Shift, artists, works, genr
 \end{titlepage}
 
 \section{Introduction and Data}
-The project studies the music knowledge graph released for VAST Challenge 2025 Mini Challenge 1. It contains \textbf{17,412 entities} and \textbf{37,857 directed relationships}. Entities include people, songs, albums, record labels, and musical groups. Typed links describe performance, recording, composition, production, distribution, membership, covers, samples, references, and stylistic connections.
+The project studies the music knowledge graph released for VAST Challenge 2025 Mini Challenge 1, which asks analysts to investigate Sailor Shift and the rise of Oceanus Folk. The graph contains \textbf{17,412 entities} and \textbf{37,857 directed relationships}. Entities include people, songs, albums, record labels, musical groups, and genre-related nodes. Typed links describe performance, recording, composition, production, distribution, membership, covers, samples, references, and stylistic connections.
 
-A table alone cannot communicate this relational structure, while drawing the complete graph would create an unreadable node--link hairball. The dashboard therefore combines a focused ego network with coordinated statistical views. Each visual answers a specific question and can also refine the analytical state.
+A table alone cannot communicate this relational structure, while drawing the complete graph would create an unreadable node--link hairball. The dashboard therefore combines a focused ego network with coordinated statistical views to communicate influence, collaboration, genre diffusion, temporal evolution, artist comparison, and rising-star hypotheses. The dataset does not provide reliable geographic fields, so ``spread'' is interpreted as diffusion through the music ecosystem rather than geographic movement.
 
 \begin{table}[H]\centering\small
 \begin{tabularx}{\textwidth}{>{\bfseries}p{2.7cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
@@ -142,9 +142,9 @@ Derived measures & Degree, creative links, releases, genre diversity & Compariso
 \end{table}
 
 \section{Analytical Goals and Design}
-The principal goal is to understand how Oceanus Folk develops through artists, works, genres, and influence. The interface supports questions about Sailor Shift's neighbourhood, temporal growth, dominant relationship types, stylistic bridges, artist profiles, and possible rising stars.
+The principal goal is to understand how Oceanus Folk develops through artists, works, genres, and influence. The interface supports the official MC1 tasks: profiling Sailor Shift, showing influence over time, comparing direct and indirect collaborations, identifying Oceanus Folk impact, distinguishing gradual from intermittent rise, finding affected artists and external genres, comparing three artists, and producing transparent hypotheses for future stars.
 
-The design follows \emph{overview first, filter and select, details on demand}. KPI cards summarize the visible graph. The radial network receives the largest area because relationships are central to the task. Position and length support quantitative comparison; colour hue separates nominal entity types; line and column marks encode time; and a donut is reserved for the small part-to-whole entity composition. Teal is the dashboard selection accent; blue supports factual comparison; orange signals provisional hypotheses; slate represents neutral structure; rose identifies influence evidence; and the entity palette remains consistent across views. The global controls and direct chart selections update coordinated views, keeping the human analyst in the reasoning loop.
+The design follows \emph{overview first, filter and select, details on demand}. KPI cards and the Sailor Shift profile establish context. The radial network receives the largest area because relationships are central to the task. Position and length support quantitative comparison; colour hue separates nominal entity types; line and column marks encode time; a donut is reserved for small part-to-whole composition; and tables are used only for exact verification. Teal is the selection accent; blue supports factual comparison; orange signals provisional hypotheses; slate represents neutral structure; rose identifies influence evidence; and the entity palette remains consistent across views. Learning Mode and per-card Visual Guides explain purpose, meaning, interaction, and reading without forcing long text into the default dashboard.
 
 \begin{conceptbox}
 \small\textbf{Visual Analytics model.}
@@ -152,13 +152,13 @@ The application calculates graph metrics, filtered subsets, rankings, and tempor
 \end{conceptbox}
 
 \section{Data Preparation}
-The frontend loads the JSON graph, normalizes identifiers and missing values, extracts years, indexes nodes and links, and calculates degree and artist-level measures. Unknown metadata remains explicit instead of being silently invented. The ego network applies a node limit and prioritizes nearby, highly connected entities so that the local graph remains readable.
+The frontend loads the JSON graph, normalizes identifiers and missing values, extracts years, indexes nodes and links, and calculates degree, in-degree, out-degree, neighbours, relationship counts, timeline aggregates, genre aggregates, and artist-level measures. Unknown metadata remains explicit instead of being silently invented. Entity Focus and Genre Focus are applied after graph context is computed, so bridge nodes are preserved instead of breaking paths. The ego network applies a node limit and prioritizes nearby, highly connected entities so that the local graph remains readable.
 
 \clearpage
 \section{Dashboard Visuals}
 
-\visualcard{KPI cards}{kpis.png}{
-Cards are used because four exact headline values must be scanned faster than they could be read from a chart. They summarize visible nodes, links, artists, and songs and recalculate after global filtering, implementing \emph{overview first}. White surfaces and dark text maximize legibility, while the thin teal rule links the cards to the dashboard's analytical accent without making the numbers compete with decorative colour.
+\visualcard{KPI cards and Sailor Shift profile}{kpis.png}{
+Cards are used because exact headline values must be scanned faster than they could be read from a chart. The KPI cards summarize visible nodes, links, artists, and songs and recalculate after filtering, implementing \emph{overview first}. The Sailor Shift profile adds career span, Oceanus links, influence received and given, creative links, direct and indirect people, and nearby genre diversity, directly supporting the MC1 career-profile task. White surfaces and dark text maximize legibility, while the thin teal rule links the overview to the dashboard's selection accent.
 }
 
 \visualcard{Radial ego network}{network.png}{
@@ -177,7 +177,7 @@ A donut is appropriate because a small number of entity categories partition one
 }
 
 \visualcard{Rising-star hypotheses}{rising_stars.png}{
-A sorted horizontal bar chart is chosen because candidates must be ranked on one transparent heuristic score, and aligned lengths are easier to compare than areas or angles. Orange is used deliberately as a cautionary, provisional colour: the score generates hypotheses and is not established truth. A pale teal row identifies the currently selected candidate without changing the score encoding. Selecting a candidate updates the network and artist comparison so the ranking starts an investigation rather than ending it.
+A sorted horizontal bar chart is chosen because candidates must be ranked on one transparent heuristic score, and aligned lengths are easier to compare than areas or angles. The score is calculated as: creative links $\times 2$, influence links $\times 1.5$, nearby genre diversity $\times 1.25$, recent activity $\times 3$, Oceanus relevance $\times 3$, closeness to Sailor Shift, $\log(1+\mathrm{degree})$, and a small penalty for already-notable artists. Orange is used deliberately as a cautionary, provisional colour: the score generates hypotheses and is not established truth. Selecting a candidate updates the network and artist comparison so the ranking starts an investigation rather than ending it.
 }
 
 \visualcard{Relationship types}{relationship_types.png}{
@@ -187,7 +187,7 @@ A column chart is suitable because the relationship names are short and the goal
 \clearpage
 \section{Dashboard Visuals Continued}
 
-\visualcard{Oceanus Folk timeline}{timeline.png}{
+\visualcard{Temporal Spread of Oceanus Folk}{timeline.png}{
 A combined column-and-line chart is used because it compares two temporal signals without hiding their different mark types: aqua columns show yearly Oceanus Folk activity and a dark navy line shows influence-style relationships. Aqua connects activity to the dashboard's Oceanus accent; navy provides strong contrast for the second measure; dark teal identifies the selected year; and amber marks missing-year uncertainty. Time runs left to right and peak annotations guide interpretation. Click, playback, step controls, speed, and reset coordinate the selected year with the other views.
 }
 
@@ -211,18 +211,18 @@ A lollipop chart is chosen for a compact degree ranking: aligned dot positions p
 }
 
 \visualcard{Artist connectivity}{artist_connectivity.png}{
-A bubble scatterplot is used because two quantitative variables must be compared simultaneously: creative links on the horizontal axis and release links on the vertical axis. Bubble area adds total degree as a third measure. Context artists use sky blue, a calm comparison colour distinct from the rose influence and orange hypothesis encodings; the selected artist turns teal, and white outlines separate overlaps. Clicking a bubble selects the artist, revealing profiles that a single ranking would hide.
+A bubble scatterplot is used because two quantitative variables must be compared simultaneously: creative links are mapped to horizontal position and release links to vertical position. The axes focus on the actual visible range instead of starting at zero, which is acceptable here because position, not bar length, carries the quantitative meaning. Bubble size gives a subtle third encoding for total degree, while exact shared coordinates are grouped with a small count badge rather than displaced with misleading jitter. Sky blue is used for comparable artist points, teal marks the selected artist, white outlines separate overlaps, and the dashed diagonal shows balanced creative and release activity. The ranked Top 10 panel on the right keeps full artist names readable, supports search, and links back to the scatterplot through hover and click selection.
 }
 
 \clearpage
 \section{Dashboard Visuals Continued}
 
-\visualcard{Oceanus genre links}{oceanus_genre_links.png}{
+\visualcard{Genre Diffusion}{oceanus_genre_links.png}{
 A horizontal bar chart ranks external genres connected to Oceanus Folk, which gives long labels room and uses aligned length for accurate comparison. The aggregation assigns every link to exactly one class: Influence, Creative, or Other. The current data contains only Influence links for the displayed genres, so zero-value categories are hidden and the chart states this limitation. Rose is reserved for influence evidence, distinguishing it from teal selection and orange creative evidence. Clicking a genre applies the linked genre filter.
 }
 
 \section{Interaction Model}
-All views share one understandable analytical state: selected entity, entity type, relationship type, genre, and year range. Network depth and node limit control only the local graph presentation. A chart selection is highlighted, related views update, a repeated click clears the selection where applicable, and \textbf{Reset filters} restores Sailor Shift and the full dataset.
+All views share one understandable analytical state: selected entity, entity focus, relationship type, genre, year range, and degree range. Network depth and node limit control only the local graph presentation. A chart selection is highlighted, related views update, a repeated click clears the selection where applicable, and \textbf{Reset dashboard} restores Sailor Shift and the full dataset. Learning Mode opens all Visual Guides for presentation; each Visual Guide can also be opened or closed independently for details on demand.
 
 \begin{table}[H]\centering\small
 \begin{tabularx}{\textwidth}{>{\bfseries}p{2.7cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
@@ -234,16 +234,17 @@ Click a genre or relationship & Linked charts and graph subset update & Isolate 
 Click or play a year & Applicable views recalculate for that period & Examine temporal development \\
 Change artist selectors or mode & Shared measures are redrawn & Compare absolute and normalized profiles \\
 Reset filters & Full graph state and Sailor Shift return & Keep exploration reversible \\
+Visual Guide or Learning Mode & Explanation panels open locally or globally & Support first-time usability and oral presentation \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
 \section{State of the Art and Original Contribution}
-The dashboard follows coordinated-view practices common to Tableau, Power BI, and other visual analytics systems: compact controls, KPI feedback, linked charts, highlighting, and details on demand. Knowledge-graph tools commonly use node--link diagrams, matrices, or search-based exploration. The original D3 contribution is the radial ego network, which replaces an unconstrained force layout with explicit distance rings, relationship controls, degree-based sizing, and a readable subset rule.
+The dashboard follows coordinated-view practices common to Tableau, Power BI, and other visual analytics systems: compact controls, KPI feedback, linked charts, highlighting, and details on demand. Graph systems such as Gephi, Cytoscape, and Neo4j Bloom support network exploration, while Observable/D3 examples often demonstrate custom graph layouts. This project differs by combining graph exploration, temporal analysis, genre diffusion, artist comparison, centrality evidence, and rising-star hypotheses in one task-oriented interface. The original D3 contribution is the radial ego network, which replaces an unconstrained force layout with explicit distance rings, relationship controls, degree-based sizing, entity focus, genre context, and a readable subset rule that avoids the large-graph hairball problem.
 
 \clearpage
 \section{Analytical Use Case}
-A music journalist begins with Sailor Shift and reads the KPI overview. The analyst changes Relationship Focus to influence, examines direct and indirect neighbours, and selects a peak period in the timeline. The genre views reveal external stylistic connections, while the rising-star hypotheses suggest candidates for closer inspection. A candidate is selected, compared with Sailor Shift and another artist in raw and normalized modes, and then checked through the local network, centrality ranking, genre-link composition, and exact evidence table. The result is a traceable hypothesis supported by several coordinated views rather than one automatic score.
+A music journalist begins with the KPI overview and the Sailor Shift Profile to understand the visible graph and Sailor's role. The analyst changes Relationship Focus to influence, examines direct and indirect neighbours in the radial network, and selects a peak period in the timeline to test whether the rise is gradual or intermittent. Genre Contribution and Genre Diffusion reveal external stylistic connections. The analyst then selects the top three Rising-Star Hypotheses, compares them with Sailor Shift in raw and normalized modes, and checks centrality, artist connectivity, and exact evidence counts. The conclusion is not a deterministic prediction, but a defensible short list of likely future Oceanus Folk stars supported by coordinated visual evidence.
 
 \section{Implementation}
 The project uses Vue, JavaScript, CSS, SVG, and D3. The code flow remains deliberately simple: load and normalize the graph, hold the shared dashboard state, apply filters, compute derived metrics, and render reusable visual components. D3 scales map values to position, length, radius, and colour. Vue propagates state changes so that one interaction updates all relevant components.

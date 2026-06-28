@@ -1,6 +1,7 @@
 <script setup>
 import * as d3 from 'd3'
 import { computed, ref } from 'vue'
+import LearningHint from './LearningHint.vue'
 
 const props = defineProps({
   artists: {
@@ -14,6 +15,10 @@ const props = defineProps({
   selectedIds: {
     type: Array,
     required: true,
+  },
+  learningMode: {
+    type: Boolean,
+    default: false,
   },
 })
 
@@ -91,7 +96,7 @@ function updateArtist(index, value) {
 </script>
 
 <template>
-  <article class="va-card p-3">
+  <article class="va-card relative p-3">
     <div class="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
       <div>
         <h2 class="text-sm font-semibold text-slate-950">Artist comparison</h2>
@@ -118,6 +123,14 @@ function updateArtist(index, value) {
         </label>
       </div>
     </div>
+
+    <LearningHint
+      :learning-mode="learningMode"
+      purpose="Compares selected artists across career and influence signals."
+      use="Separate general activity from Oceanus-specific relevance."
+      interaction="Change artists or normalization mode, then click an artist to inspect it."
+      reading="Higher values indicate stronger presence in that metric on a shared scale."
+    />
 
     <div v-if="artists.length" class="mt-2">
       <div class="mb-2 flex flex-wrap gap-2 text-[11px] text-slate-600">

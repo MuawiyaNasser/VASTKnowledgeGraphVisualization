@@ -1,6 +1,7 @@
 <script setup>
 import * as d3 from 'd3'
 import { computed } from 'vue'
+import LearningHint from './LearningHint.vue'
 
 const props = defineProps({
   title: {
@@ -31,6 +32,12 @@ const props = defineProps({
     type: String,
     default: '#0f766e',
   },
+  learningMode: { type: Boolean, default: false },
+  purpose: { type: String, default: 'Ranks visible entities by a selected metric.' },
+  use: { type: String, default: 'Identify the strongest candidates or values.' },
+  interaction: { type: String, default: 'Click a row to select or inspect it.' },
+  reading: { type: String, default: 'Longer bars indicate higher values.' },
+  methodNote: { type: String, default: '' },
 })
 
 const emit = defineEmits(['select'])
@@ -54,6 +61,18 @@ function rowId(row) {
       <h2>{{ title }}</h2>
       <p v-if="subtitle">{{ subtitle }}</p>
     </div>
+
+    <LearningHint
+      :learning-mode="learningMode"
+      :purpose="purpose"
+      :use="use"
+      :interaction="interaction"
+      :reading="reading"
+    />
+
+    <p v-if="methodNote" class="mt-1 rounded border border-amber-100 bg-amber-50 px-2 py-1 text-[10px] leading-4 text-slate-700">
+      <strong class="text-amber-800">Rising Star Method:</strong> {{ methodNote }}
+    </p>
 
     <svg v-if="chartRows.length" class="mt-2 h-auto w-full" :viewBox="`0 0 ${width} ${height}`" role="img">
       <g

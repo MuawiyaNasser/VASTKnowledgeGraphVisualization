@@ -1,11 +1,13 @@
 <script setup>
 import * as d3 from 'd3'
 import { computed } from 'vue'
+import LearningHint from './LearningHint.vue'
 
 const props = defineProps({
   rows: { type: Array, required: true },
   selected: { type: String, default: '' },
   limit: { type: Number, default: 6 },
+  learningMode: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['select'])
@@ -45,7 +47,7 @@ function segmentX(row, segmentIndex) {
   <article class="va-card dashboard-chart-card">
     <div class="flex items-start justify-between gap-2">
       <div class="dashboard-panel-title">
-        <h2>Oceanus genre links</h2>
+        <h2>Genre Diffusion</h2>
         <p>{{ influenceOnly ? 'The current view contains only influence links.' : 'Influence, creative, and other connections.' }}</p>
       </div>
       <div class="flex flex-wrap justify-end gap-2 text-[9px] text-slate-500">
@@ -55,6 +57,15 @@ function segmentX(row, segmentIndex) {
         </span>
       </div>
     </div>
+
+    <LearningHint
+      :learning-mode="learningMode"
+      purpose="Shows which external genres are connected to Oceanus Folk."
+      use="Understand genre influence and stylistic evolution."
+      interaction="Click a genre to focus linked views on that genre context."
+      reading="Larger stacked values indicate stronger genre linkage; colors separate influence, creative, and other links."
+    />
+
     <svg v-if="chartRows.length" class="mt-1 h-auto w-full" :viewBox="`0 0 ${width} ${height}`" role="img">
       <g
         v-for="(row, rowIndex) in chartRows"

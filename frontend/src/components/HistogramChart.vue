@@ -1,6 +1,7 @@
 <script setup>
 import * as d3 from 'd3'
 import { computed } from 'vue'
+import LearningHint from './LearningHint.vue'
 
 const props = defineProps({
   title: {
@@ -15,7 +16,17 @@ const props = defineProps({
     type: Array,
     required: true,
   },
+  selected: {
+    type: String,
+    default: '',
+  },
+  learningMode: {
+    type: Boolean,
+    default: false,
+  },
 })
+
+const emit = defineEmits(['select'])
 
 const width = 300
 const height = 180
@@ -35,6 +46,14 @@ const yTicks = computed(() => yScale.value.ticks(3))
       <h2>{{ title }}</h2>
       <p v-if="subtitle">{{ subtitle }}</p>
     </div>
+
+    <LearningHint
+      :learning-mode="learningMode"
+      purpose="Shows how connected entities are across the graph."
+      use="Detect whether the graph is hub-dominated or evenly connected."
+      interaction="Click a bin to focus the dashboard on that degree range."
+      reading="Many low-degree nodes and few high-degree nodes indicate a long-tail network."
+    />
 
     <svg v-if="rows.length" class="mt-2 h-auto w-full" :viewBox="`0 0 ${width} ${height}`" role="img">
       <g>
@@ -58,14 +77,23 @@ const yTicks = computed(() => yScale.value.ticks(3))
           {{ tick >= 1000 ? `${Math.round(tick / 1000)}k` : tick }}
         </text>
       </g>
-      <g v-for="row in rows" :key="row.label">
+      <g
+        v-for="row in rows"
+        :key="row.label"
+        tabindex="0"
+        class="cursor-pointer"
+        :aria-label="`Degree range ${row.label}, ${row.value.toLocaleString()} visible entities. Press Enter to filter.`"
+        @click="emit('select', row)"
+        @keydown.enter.prevent="emit('select', row)"
+        @keydown.space.prevent="emit('select', row)"
+      >
         <rect
           :x="xScale(row.label)"
           :y="yScale(row.value)"
           :width="xScale.bandwidth()"
           :height="height - margin.bottom - yScale(row.value)"
-          fill="#475569"
-          opacity="0.85"
+          :fill="selected === row.label ? '#0f766e' : '#475569'"
+          :opacity="selected && selected !== row.label ? 0.35 : 0.85"
           rx="1.5"
         >
           <title>{{ row.label }} degree: {{ row.value.toLocaleString() }} entities</title>

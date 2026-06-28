@@ -1,6 +1,7 @@
 <script setup>
 import * as d3 from 'd3'
 import { computed } from 'vue'
+import LearningHint from './LearningHint.vue'
 
 const props = defineProps({
   data: {
@@ -18,6 +19,10 @@ const props = defineProps({
   playbackSpeed: {
     type: Number,
     default: 900,
+  },
+  learningMode: {
+    type: Boolean,
+    default: false,
   },
 })
 
@@ -86,10 +91,10 @@ function influenceAnnotationY(row) {
 </script>
 
 <template>
-  <article class="va-card flex h-full flex-col p-3">
+  <article class="va-card relative flex h-full flex-col p-3">
     <div class="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
       <div>
-        <h2 class="text-sm font-semibold text-slate-950">Oceanus Folk Timeline</h2>
+        <h2 class="text-sm font-semibold text-slate-950">Temporal Spread of Oceanus Folk</h2>
         <p class="mt-0.5 text-[11px] text-slate-500">
           Bars show Oceanus Folk entities by year. The line shows influence-style relationships.
         </p>
@@ -137,6 +142,14 @@ function influenceAnnotationY(row) {
       <span class="inline-flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full bg-teal-700" /> Selected year</span>
       <span class="inline-flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full border border-amber-500 bg-amber-100" /> Missing years are not plotted</span>
     </div>
+
+    <LearningHint
+      :learning-mode="learningMode"
+      purpose="Shows how Oceanus Folk activity changes over time."
+      use="Find years where activity or influence accelerates."
+      interaction="Click a year, use playback, step through years, or reset the time filter."
+      reading="Columns show Oceanus Folk entities; the line shows influence-style links from left to right."
+    />
 
     <svg class="mt-2 h-auto w-full" :viewBox="`0 0 ${width} ${height}`" role="img">
       <g>

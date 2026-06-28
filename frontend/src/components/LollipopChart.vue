@@ -1,6 +1,7 @@
 <script setup>
 import * as d3 from 'd3'
 import { computed } from 'vue'
+import LearningHint from './LearningHint.vue'
 
 const props = defineProps({
   title: { type: String, required: true },
@@ -8,6 +9,7 @@ const props = defineProps({
   rows: { type: Array, required: true },
   selectedId: { type: [String, Number], default: '' },
   limit: { type: Number, default: 7 },
+  learningMode: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['select'])
@@ -27,6 +29,15 @@ const xScale = computed(() =>
       <h2>{{ title }}</h2>
       <p>{{ subtitle }}</p>
     </div>
+
+    <LearningHint
+      :learning-mode="learningMode"
+      purpose="Identifies highly connected entities."
+      use="Find hubs such as major artists, songs, labels, or groups."
+      interaction="Click an entity to inspect its local context in the network."
+      reading="Farther dots mean higher degree, which means more graph connections."
+    />
+
     <svg v-if="chartRows.length" class="mt-1 h-auto w-full" :viewBox="`0 0 ${width} ${height}`" role="img">
       <g
         v-for="(row, index) in chartRows"

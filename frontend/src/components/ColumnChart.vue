@@ -1,6 +1,7 @@
 <script setup>
 import * as d3 from 'd3'
 import { computed } from 'vue'
+import LearningHint from './LearningHint.vue'
 
 const props = defineProps({
   title: {
@@ -19,39 +20,137 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  selectedEntityName: {
+    type: String,
+    default: '',
+  },
+  selectedTotal: {
+    type: Number,
+    default: 0,
+  },
+  mode: {
+    type: String,
+    default: 'compare',
+  },
   limit: {
     type: Number,
     default: 6,
   },
+  learningMode: {
+    type: Boolean,
+    default: false,
+  },
 })
 
-const emit = defineEmits(['select'])
+const emit = defineEmits(['select', 'update-mode'])
 
-const width = 340
+const width = 350
 const height = 210
-const margin = { top: 14, right: 8, bottom: 48, left: 36 }
-const chartData = computed(() => props.data.slice(0, props.limit))
+const margin = { top: 14, right: 12, bottom: 48, left: 38 }
+const hasSelectedEntity = computed(() => Boolean(props.selectedEntityName))
+const isSelectedOnly = computed(() => hasSelectedEntity.value && props.mode === 'selected-only')
+
+const chartData = computed(() => {
+  const rows = props.data.slice()
+
+  if (isSelectedOnly.value) {
+    return rows
+      .filter((row) => row.selectedValue > 0)
+      .sort((a, b) => b.selectedValue - a.selectedValue || a.label.localeCompare(b.label))
+      .slice(0, props.limit)
+  }
+
+  return rows.slice(0, props.limit)
+})
+
+const maxValue = computed(() =>
+  isSelectedOnly.value
+    ? d3.max(chartData.value, (row) => row.selectedValue) ?? 1
+    : d3.max(chartData.value, (row) => row.value) ?? 1,
+)
+
+const maxSelectedShare = computed(() => Math.max(1, d3.max(chartData.value, (row) => row.selectedShare) ?? 1))
+
 const xScale = computed(() =>
   d3.scaleBand().domain(chartData.value.map((row) => row.label)).range([margin.left, width - margin.right]).padding(0.28),
 )
 const yScale = computed(() =>
-  d3.scaleLinear().domain([0, d3.max(chartData.value, (row) => row.value) ?? 1]).nice().range([height - margin.bottom, margin.top]),
+  d3.scaleLinear().domain([0, maxValue.value]).nice().range([height - margin.bottom, margin.top]),
+)
+const selectedShareScale = computed(() =>
+  d3.scaleLinear().domain([0, maxSelectedShare.value]).range([height - margin.bottom, margin.top]),
 )
 const yTicks = computed(() => yScale.value.ticks(4))
 
+function graphValue(row) {
+  return row.value ?? 0
+}
+
+function selectedValue(row) {
+  return row.selectedValue ?? 0
+}
+
+function barValue(row) {
+  return isSelectedOnly.value ? selectedValue(row) : graphValue(row)
+}
+
 function shortLabel(label) {
   return label.length > 11 ? `${label.slice(0, 10)}.` : label
+}
+
+function formatNumber(value) {
+  return Number(value ?? 0).toLocaleString()
+}
+
+function tooltipText(row) {
+  if (!hasSelectedEntity.value) {
+    return `Relationship: ${row.label}
+Links: ${formatNumber(row.value)}
+Share of visible graph links: ${(row.graphShare ?? 0).toFixed(1)}%`
+  }
+
+  return `Relationship: ${row.label}
+${props.selectedEntityName}: ${formatNumber(row.selectedValue)} links
+Incoming: ${formatNumber(row.selectedIncoming)}
+Outgoing: ${formatNumber(row.selectedOutgoing)}
+Current graph: ${formatNumber(row.value)} links
+Share of ${props.selectedEntityName}'s direct links: ${(row.selectedShare ?? 0).toFixed(1)}%
+Share of visible graph links: ${(row.graphShare ?? 0).toFixed(1)}%`
 }
 </script>
 
 <template>
   <article class="va-card dashboard-chart-card">
-    <div class="dashboard-panel-title">
-      <h2>{{ title }}</h2>
-      <p v-if="subtitle">{{ subtitle }}</p>
+    <div class="flex items-start justify-between gap-2">
+      <div class="dashboard-panel-title min-w-0">
+        <h2>{{ title }}</h2>
+        <p v-if="subtitle" :title="subtitle">{{ subtitle }}</p>
+      </div>
+
+      <label v-if="hasSelectedEntity" class="relationship-mode-control">
+        View
+        <select :value="mode" @change="emit('update-mode', $event.target.value)">
+          <option value="compare">Compare with graph</option>
+          <option value="selected-only">Selected only</option>
+        </select>
+      </label>
     </div>
 
-    <svg v-if="chartData.length" class="mt-2 h-auto w-full" :viewBox="`0 0 ${width} ${height}`" role="img">
+    <div v-if="hasSelectedEntity" class="relationship-legend">
+      <span><i class="graph-swatch" /> Graph total</span>
+      <span v-if="mode === 'compare'"><i class="profile-dot" /> Selected profile share</span>
+      <span v-else><i class="selected-swatch" /> Selected direct links</span>
+    </div>
+
+    <LearningHint
+      :learning-mode="learningMode"
+      purpose="Shows the most frequent relationship categories."
+      use="Understand what kinds of connections dominate the graph."
+      interaction="Click or filter by relationship type if supported."
+      reading="Taller bars mean that relationship type appears more often."
+    />
+
+    <svg v-if="chartData.length" class="mt-1 h-auto w-full" :viewBox="`0 0 ${width} ${height}`" role="img">
       <g>
         <line
           v-for="tick in yTicks"
@@ -74,29 +173,132 @@ function shortLabel(label) {
         </text>
       </g>
 
-      <g v-for="row in chartData" :key="row.label" class="cursor-pointer" @click="emit('select', row.label)">
+      <g
+        v-for="row in chartData"
+        :key="row.label"
+        class="cursor-pointer relationship-bar-group"
+        tabindex="0"
+        :aria-label="`${row.label}, ${formatNumber(row.value)} graph links, ${formatNumber(row.selectedValue)} selected entity links. Press Enter to filter by this relationship.`"
+        @click="emit('select', row.label)"
+        @keydown.enter.prevent="emit('select', row.label)"
+        @keydown.space.prevent="emit('select', row.label)"
+      >
         <rect
           :x="xScale(row.label)"
-          :y="yScale(row.value)"
+          :y="yScale(barValue(row))"
           :width="xScale.bandwidth()"
-          :height="height - margin.bottom - yScale(row.value)"
-          :fill="selected === row.label ? '#0f766e' : '#60a5fa'"
-          :opacity="selected && selected !== row.label ? 0.35 : 0.9"
+          :height="height - margin.bottom - yScale(barValue(row))"
+          :fill="isSelectedOnly ? '#0f766e' : selected === row.label ? '#0f766e' : '#93c5fd'"
+          :opacity="selected && selected !== row.label ? 0.35 : 0.92"
           rx="2"
         >
-          <title>{{ row.label }}: {{ row.value.toLocaleString() }}</title>
+          <title>{{ tooltipText(row) }}</title>
         </rect>
+
+        <template v-if="hasSelectedEntity && !isSelectedOnly">
+          <line
+            v-if="selectedValue(row) > 0"
+            :x1="(xScale(row.label) ?? 0) + xScale.bandwidth() * 0.18"
+            :x2="(xScale(row.label) ?? 0) + xScale.bandwidth() * 0.82"
+            :y1="selectedShareScale(row.selectedShare)"
+            :y2="selectedShareScale(row.selectedShare)"
+            stroke="#0f766e"
+            stroke-width="3"
+            stroke-linecap="round"
+          >
+            <title>{{ tooltipText(row) }}</title>
+          </line>
+          <circle
+            v-if="selectedValue(row) > 0"
+            :cx="(xScale(row.label) ?? 0) + xScale.bandwidth() / 2"
+            :cy="selectedShareScale(row.selectedShare)"
+            r="3.2"
+            fill="#0f766e"
+            stroke="white"
+            stroke-width="1"
+          >
+            <title>{{ tooltipText(row) }}</title>
+          </circle>
+        </template>
+
         <text
           :x="(xScale(row.label) ?? 0) + xScale.bandwidth() / 2"
           :y="height - 30"
           text-anchor="middle"
-          class="fill-slate-600 text-[8px]"
+          :class="selectedValue(row) > 0 ? 'fill-teal-800 font-semibold text-[8px]' : 'fill-slate-600 text-[8px]'"
         >
           {{ shortLabel(row.label) }}
         </text>
       </g>
     </svg>
 
-    <p v-else class="dashboard-empty">No column values available.</p>
+    <p v-else class="dashboard-empty">
+      {{ hasSelectedEntity ? `${selectedEntityName} has no direct relationships under the current filters.` : 'No column values available.' }}
+    </p>
   </article>
 </template>
+
+<style scoped>
+.relationship-mode-control {
+  display: grid;
+  gap: 0.15rem;
+  color: #64748b;
+  font-size: 0.62rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.relationship-mode-control select {
+  height: 1.55rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.25rem;
+  background: white;
+  padding: 0 0.35rem;
+  color: #334155;
+  font-size: 0.66rem;
+  outline: none;
+}
+
+.relationship-mode-control select:focus,
+.relationship-bar-group:focus {
+  outline: 2px solid rgba(15, 118, 110, 0.35);
+  outline-offset: 2px;
+}
+
+.relationship-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+  color: #64748b;
+  font-size: 0.62rem;
+}
+
+.relationship-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.graph-swatch,
+.selected-swatch {
+  width: 0.65rem;
+  height: 0.45rem;
+  border-radius: 0.12rem;
+}
+
+.graph-swatch {
+  background: #93c5fd;
+}
+
+.selected-swatch {
+  background: #0f766e;
+}
+
+.profile-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: #0f766e;
+}
+</style>
