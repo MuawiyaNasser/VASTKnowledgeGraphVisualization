@@ -47,7 +47,7 @@ function segmentX(row, segmentIndex) {
   <article class="va-card dashboard-chart-card">
     <div class="flex items-start justify-between gap-2">
       <div class="dashboard-panel-title">
-        <h2>Genre Diffusion</h2>
+        <h2>External Genre Influence on Oceanus Folk</h2>
         <p>{{ influenceOnly ? 'The current view contains only influence links.' : 'Influence, creative, and other connections.' }}</p>
       </div>
       <div class="flex flex-wrap justify-end gap-2 text-[9px] text-slate-500">

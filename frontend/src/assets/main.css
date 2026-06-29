@@ -187,11 +187,27 @@
   .dashboard-board {
     @apply grid min-w-0 gap-1.5;
     grid-template-columns: repeat(12, minmax(0, 1fr));
-    align-items: stretch;
+    align-items: start;
   }
 
   .dashboard-kpi-row {
     grid-column: span 12;
+    align-self: start;
+  }
+
+  .dashboard-kpi-grid {
+    @apply grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-4;
+    align-items: start;
+  }
+
+  .dashboard-kpi-card {
+    min-height: 96px;
+    align-self: start;
+    padding: 0.75rem 0.85rem;
+  }
+
+  .dashboard-kpi-value {
+    @apply text-[1.8rem] font-semibold leading-none text-slate-950;
   }
 
   .dashboard-card-heading {
@@ -376,13 +392,13 @@
 
   @media (min-width: 1200px) {
     .dashboard-kpi-row {
-      grid-column: 1 / span 8;
+      grid-column: 1 / span 12;
       grid-row: 1;
     }
 
     .dashboard-sailor-panel {
-      grid-column: 9 / span 4;
-      grid-row: 1;
+      grid-column: 7 / span 3;
+      grid-row: 2;
     }
 
     .dashboard-network-panel {
@@ -391,13 +407,13 @@
     }
 
     .dashboard-genre-panel {
-      grid-column: 7 / span 3;
+      grid-column: 10 / span 3;
       grid-row: 2;
     }
 
     .dashboard-entity-panel {
-      grid-column: 10 / span 3;
-      grid-row: 2;
+      grid-column: 1 / span 3;
+      grid-row: 5;
     }
 
     .dashboard-timeline-panel {
@@ -421,17 +437,17 @@
     }
 
     .dashboard-degree-panel {
-      grid-column: 1 / span 4;
+      grid-column: 4 / span 3;
       grid-row: 5;
     }
 
     .dashboard-evidence-panel {
-      grid-column: 5 / span 4;
+      grid-column: 7 / span 3;
       grid-row: 5;
     }
 
     .dashboard-centrality-panel {
-      grid-column: 9 / span 4;
+      grid-column: 10 / span 3;
       grid-row: 5;
     }
 

@@ -55,14 +55,8 @@ await compactPage.goto('http://127.0.0.1:5173/', { waitUntil: 'networkidle' })
 await compactPage.locator('.dashboard-kpi-row').waitFor({ state: 'visible' })
 await compactPage.evaluate(() => document.fonts.ready)
 const overviewClip = await compactPage.evaluate(() => {
-  const boxes = ['.dashboard-kpi-row', '.dashboard-sailor-panel']
-    .map((selector) => document.querySelector(selector)?.getBoundingClientRect())
-    .filter(Boolean)
-  const left = Math.min(...boxes.map((box) => box.left))
-  const top = Math.min(...boxes.map((box) => box.top))
-  const right = Math.max(...boxes.map((box) => box.right))
-  const bottom = Math.max(...boxes.map((box) => box.bottom))
-  return { x: left, y: top, width: right - left, height: bottom - top }
+  const box = document.querySelector('.dashboard-kpi-row').getBoundingClientRect()
+  return { x: box.left, y: box.top, width: box.width, height: box.height }
 })
 await compactPage.screenshot({
   path: path.join(figuresDir, 'kpis.png'),
